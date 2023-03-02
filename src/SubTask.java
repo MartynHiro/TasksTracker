@@ -1,8 +1,8 @@
 public class SubTask extends Task {
-    protected String advancedTaskTitle; //к какой суперзадаче она принадлежит
-    public SubTask(String title, String description, String advancedTaskTitle) {
+    protected int advancedTaskNumber; //к какой суперзадаче она принадлежит
+    public SubTask(String title, String description, int advancedTaskNumber) {
         super(title, description);
-        this.advancedTaskTitle = advancedTaskTitle;
+        this.advancedTaskNumber = advancedTaskNumber;
     }
 
     public void setStatus(TaskStatus newStatus) { //обновление статуса

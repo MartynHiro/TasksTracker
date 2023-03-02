@@ -5,6 +5,8 @@ public class Task {
     protected static int totalTasksNumber = 0;
     protected TaskStatus status;
 
+    protected TaskIdentifier identifier;
+
     public Task(String title, String description) {
         this.title = title;
         this.description = description;
@@ -38,5 +40,13 @@ public class Task {
 
     public void setStatus(TaskStatus status) {
         this.status = status;
+    }
+
+    public void setIdentifier(TaskIdentifier identifier) {
+        this.identifier = identifier;
+    }
+
+    public TaskIdentifier getIdentifier() {
+        return identifier;
     }
 }

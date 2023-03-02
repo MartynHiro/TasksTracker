@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.TreeMap;
 
@@ -46,12 +47,26 @@ public class Manager {
     }
 
     public void printOneTask() {
-        System.out.println("Введите номер задачи для отображения");
-        int taskUniqueNumber = scanner.nextInt();
+        StringBuilder sbShortTasksInfo = new StringBuilder();
 
-        Task currentTask = tasksList.get(taskUniqueNumber);
-        System.out.println("Наименование задачи - " + currentTask.getTitle() +
-                "\n \t   Описание: " + currentTask.getDescription());
+        for (Integer key : tasksList.keySet()) {
+            Task value = tasksList.get(key);
+            sbShortTasksInfo.append("Статус задачи - " + value.getStatus() +
+                    " , название задачи - " + value.getTitle() + " , уникальный номер задачи - " +
+                    value.uniqueNumber + "\n");
+        }
+        if (sbShortTasksInfo.isEmpty()) {
+            System.out.println("Вы еще ничего не сохраняли");
+        } else {
+            System.out.println(sbShortTasksInfo);
+
+            System.out.println("Введите номер задачи для отображения");
+            int taskUniqueNumber = scanner.nextInt();
+
+            Task currentTask = tasksList.get(taskUniqueNumber);
+            System.out.println("Наименование задачи - " + currentTask.getTitle() +
+                    "\n \t   Описание: " + currentTask.getDescription());
+        }
     }
 
     public void addNewTask() {
@@ -70,23 +85,43 @@ public class Manager {
             String taskDescription = scanner.nextLine();
 
             switch (taskType) {
-                case 1:
+                case 1 -> {
                     Task newTask = new Task(taskTitle, taskDescription);
                     tasksList.put(newTask.getUniqueNumber(), newTask);
-
-                case 2:
+                }
+                case 2 -> {
                     AdvancedTask newAdvTask = new AdvancedTask(taskTitle, taskDescription);
                     tasksList.put(newAdvTask.getUniqueNumber(), newAdvTask);
+                }
+                case 3 -> {
+                    StringBuilder sbShortTasksInfo = new StringBuilder();
+                    for (Integer key : tasksList.keySet()) {
+                        Task value = tasksList.get(key);
 
-                case 3:
-                    System.out.println("Введите наименование продвинутой задачи, для которой предназначена это подзадача");
-                    String advancedTaskTitle = scanner.next();
+                        if (value.getIdentifier() == TaskIdentifier.advanced) { //выводим список только адванс задач
+                            sbShortTasksInfo.append("Статус задачи - " + value.getStatus() +
+                                    " , название задачи - " + value.getTitle() + " , уникальный номер задачи - " +
+                                    value.uniqueNumber + "\n");
+                        }
+                    }
+                    if (sbShortTasksInfo.isEmpty()) {
+                        System.out.println("Продвинутых задач еще не было создано");
 
-                    SubTask newSubTask = new SubTask(taskTitle, taskDescription, advancedTaskTitle);
-                    tasksList.put(newSubTask.getUniqueNumber(), newSubTask);
+                    } else {
+                        System.out.println(sbShortTasksInfo);
 
-                default:
-                    System.out.println("Такого типа задач не существует");
+                        System.out.println("Введите номер продвинутой задачи, для которой предназначена эта подзадача");
+                        int advancedTaskNumber = scanner.nextInt();
+
+                        SubTask newSubTask = new SubTask(taskTitle, taskDescription, advancedTaskNumber);
+                        tasksList.put(newSubTask.getUniqueNumber(), newSubTask);
+
+                        AdvancedTask advTask = (AdvancedTask) tasksList.get(advancedTaskNumber); //Добавляем в адванс нашу саб задачу
+                        advTask.setSubTasksNumbers(advancedTaskNumber);
+                        tasksList.put(advTask.getUniqueNumber(), advTask); //перезаписываем ее обратно
+                    }
+                }
+                default -> System.out.println("Такого типа задач не существует");
             }
         } catch (Exception e) {
             System.out.println("Введите пожалуйста цифру");
@@ -96,59 +131,69 @@ public class Manager {
     public void changeTask() {
         StringBuilder sbShortTasksInfo = new StringBuilder();
 
-        for (Integer key : tasksList.keySet()) {
-            Task value = tasksList.get(key);
-            if (value.getStatus() != TaskStatus.Done) {
-                sbShortTasksInfo.append("Статус задачи - " + value.getStatus() +
-                        " , название задачи - " + value.getTitle() + " , уникальный номер задачи - " +
-                        value.uniqueNumber + "\n");
+        if (tasksList.isEmpty()) {
+            System.out.println("Ни одной задачи еще не было добавлено");
+
+        } else {
+            for (Integer key : tasksList.keySet()) {
+                Task value = tasksList.get(key);
+                if (value.getStatus() != TaskStatus.Done) {
+                    sbShortTasksInfo.append("Статус задачи - " + value.getStatus() +
+                            " , название задачи - " + value.getTitle() + " , уникальный номер задачи - " +
+                            value.uniqueNumber + "\n");
+                }
             }
-        }
-        System.out.println(sbShortTasksInfo + "\n Введите уникальный номер задачи для ее изменения: ");
-        int taskNumberForChange = scanner.nextInt();
-
-        Task taskForChange = tasksList.get(taskNumberForChange);
-        System.out.println("Вы выбрали задачу - " + taskForChange.getTitle() + " она типа - " + taskForChange.getStatus());
-
-        while (true) {
-            System.out.println("""
-                    Введите номер того операции
-                    1.Смена названия
-                    2.Смена описания
-                    3.Смена статуса
-                    4.Выйти из меню и сохранить изменения""");
-
+            System.out.println(sbShortTasksInfo + "\n Введите уникальный номер задачи для ее изменения: ");
             try {
-                int selectionNumber = scanner.nextInt();
+                int taskNumberForChange = scanner.nextInt();
 
-                switch (selectionNumber) {
-                    case 1:
-                        System.out.println("Введите новое название: ");
-                        String newName = scanner.next();
-                        taskForChange.setTitle(newName);
+                Task taskForChange = tasksList.get(taskNumberForChange);
+                System.out.println("Вы выбрали задачу - " + taskForChange.getTitle() + " она типа - " + taskForChange.getStatus());
 
-                    case 2:
-                        System.out.println("Введите новое описание: ");
-                        String newDescription = scanner.nextLine();
-                        taskForChange.setDescription(newDescription);
+                while (true) {
+                    System.out.println("""
+                            Введите номер того операции
+                            1.Смена названия
+                            2.Смена описания
+                            3.Смена статуса
+                            4.Выйти из меню и сохранить изменения""");
 
-                    case 3:
-                        System.out.println("Введите новый статус InProgress / Done :");
-                        String newStatus = scanner.next();
+                    try {
+                        int selectionNumber = scanner.nextInt();
 
-                        if (newStatus.equals("InProgress")) {
-                            taskForChange.setStatus(TaskStatus.InProgress);
+                        switch (selectionNumber) {
+                            case 1 -> {
+                                System.out.println("Введите новое название: ");
+                                String newName = scanner.next();
+                                taskForChange.setTitle(newName);
+                            }
+                            case 2 -> {
+                                System.out.println("Введите новое описание: ");
+                                String newDescription = scanner.nextLine();
+                                taskForChange.setDescription(newDescription);
+                            }
+                            case 3 -> {
+                                System.out.println("Введите новый статус InProgress / Done :");
+                                String newStatus = scanner.next();
+                                if (newStatus.equals("InProgress")) {
+                                    taskForChange.setStatus(TaskStatus.InProgress);
 
-                        } else if (newStatus.equals("Done")) {
-                            taskForChange.setStatus(TaskStatus.Done);
+                                } else if (newStatus.equals("Done")) {
+                                    taskForChange.setStatus(TaskStatus.Done);
 
-                        } else {
-                            System.out.println("Неверный статус");
+                                } else {
+                                    System.out.println("Неверный статус");
+                                }
+                            }
+                            case 4 -> {
+                                tasksList.put(taskNumberForChange, taskForChange);
+                                System.out.println("Изменения сохранены");
+                            }
+                            default -> System.out.println("Такой операции не существует");
                         }
-
-                    case 4:
-                        tasksList.put(taskNumberForChange, taskForChange);
-                        System.out.println("Изменения сохранены");
+                    } catch (Exception e) {
+                        System.out.println("Неверный ввод");
+                    }
                 }
             } catch (Exception e) {
                 System.out.println("Неверный ввод");
@@ -159,17 +204,65 @@ public class Manager {
     public void deleteTask() {
         StringBuilder sbShortTasksInfo = new StringBuilder();
 
-        for (Integer key : tasksList.keySet()) {
-            Task value = tasksList.get(key);
+        if (tasksList.isEmpty()) {
+            System.out.println("Нет задач для удаления");
 
-            sbShortTasksInfo.append("Статус задачи - " + value.getStatus() +
-                    " , название задачи - " + value.getTitle() + " , уникальный номер задачи - " +
-                    value.uniqueNumber + "\n");
+        } else {
+            for (Integer key : tasksList.keySet()) {
+                Task value = tasksList.get(key);
+
+                sbShortTasksInfo.append("Статус задачи - " + value.getStatus() +
+                        " , название задачи - " + value.getTitle() + " , уникальный номер задачи - " +
+                        value.uniqueNumber + "\n");
+            }
+
+            System.out.println(sbShortTasksInfo + "\n Введите уникальный номер задачи для ее удаления из списка: ");
+            int taskNumberForChange = scanner.nextInt();
+
+            tasksList.remove(taskNumberForChange);
         }
+    }
 
-        System.out.println(sbShortTasksInfo + "\n Введите уникальный номер задачи для ее удаления из списка: ");
-        int taskNumberForChange = scanner.nextInt();
+    public void printContentFromAdvancedTask() {
+        StringBuilder sbShortTasksInfo = new StringBuilder();
 
-        tasksList.remove(taskNumberForChange);
+        if (tasksList.isEmpty()) {
+            System.out.println("Вы еще не добавляли задач");
+
+        } else {
+            for (Integer key : tasksList.keySet()) {
+                Task value = tasksList.get(key);
+
+                if (value.getIdentifier() == TaskIdentifier.advanced) {    //выводим список только адванс задач
+                    sbShortTasksInfo.append("Статус задачи - " + value.getStatus() +
+                            " , название задачи - " + value.getTitle() + " , уникальный номер задачи - " +
+                            value.uniqueNumber + "\n");
+                }
+            }
+
+            if (sbShortTasksInfo.isEmpty()) {
+                System.out.println("Вы еще не добавляли продвинутых задач");
+
+            } else {
+                System.out.println(sbShortTasksInfo);
+
+                System.out.println("Выберите номер задачи, содержание которой вы хотите просмотреть: ");
+
+                try {
+                    int selectedNumber = scanner.nextInt();
+
+                    AdvancedTask selectedTask = (AdvancedTask) tasksList.get(selectedNumber); //
+                    System.out.println("В этом списке содержатся подзадачи: \n");
+                    ArrayList<Integer> numbersOfSubTasks = selectedTask.getSubTasksNumbers(); //достаем номера нужных нам саб задач
+
+                    for (Integer numbersOfSubTask : numbersOfSubTasks) { //проходимся по нашему списку
+                        Task task = tasksList.get(numbersOfSubTask);
+                        System.out.println(task.getTitle());
+                    }
+                } catch (Exception e) {
+                    System.out.println("Неверный ввод");
+                }
+            }
+        }
     }
 }
