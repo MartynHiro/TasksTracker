@@ -10,7 +10,7 @@ public class Task {
     public Task(String title, String description) {
         this.title = title;
         this.description = description;
-        this.status = TaskStatus.New;
+        this.status = TaskStatus.NEW;
         uniqueNumber = totalTasksNumber++;
     }
 

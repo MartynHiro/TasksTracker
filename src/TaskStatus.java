@@ -1,3 +1,3 @@
 public enum TaskStatus {
-    New, InProgress, Done;
+    NEW, IN_PROGRESS, DONE;
 }

@@ -1,15 +1,16 @@
-import java.util.ArrayList;
-import java.util.Scanner;
-import java.util.TreeMap;
+import java.util.*;
 
-public class Manager {
-    protected TreeMap<Integer, Task> tasksList;
+public class InMemoryTaskManager implements TaskManager {
+    protected TreeMap<Integer, Task> tasksList; //список всех задач
+    protected List<Task> searchHistory; //список просмотра
     Scanner scanner = new Scanner(System.in);
 
-    public Manager() {
+    public InMemoryTaskManager() {
         this.tasksList = new TreeMap<>();
+        this.searchHistory = new LinkedList<>();
     }
 
+    @Override
     public void printTasksList() { //получение списка всех задач
         StringBuilder sbNewTasks = new StringBuilder();
         StringBuilder sbProgressTasks = new StringBuilder();
@@ -19,11 +20,11 @@ public class Manager {
             for (Integer key : tasksList.keySet()) { //перебираем все дерево задач
                 Task value = tasksList.get(key);
 
-                if (value.getStatus() == TaskStatus.New) { //можем через == так как это ENUM
+                if (value.getStatus() == TaskStatus.NEW) { //можем через == так как это ENUM
                     sbNewTasks.append("\tНаименование задачи - " + value.getTitle() +
                             "\n \t   Описание: " + value.getDescription() + "\n");
 
-                } else if (value.getStatus() == TaskStatus.InProgress) {
+                } else if (value.getStatus() == TaskStatus.IN_PROGRESS) {
                     sbProgressTasks.append("\tНаименование задачи - " + value.getTitle() +
                             "\n \t   Описание: " + value.getDescription() + "\n");
 
@@ -42,14 +43,16 @@ public class Manager {
         }
     }
 
+    @Override
     public void deleteAllTasks() {
         tasksList.clear();
     }
 
-    public void printOneTask() {
+    @Override
+    public void printOneTask() { //метод вывода одной задачи по ее id
         StringBuilder sbShortTasksInfo = new StringBuilder();
 
-        for (Integer key : tasksList.keySet()) {
+        for (Integer key : tasksList.keySet()) { //сборка списка задач для вывода
             Task value = tasksList.get(key);
             sbShortTasksInfo.append("Статус задачи - " + value.getStatus() +
                     " , название задачи - " + value.getTitle() + " , уникальный номер задачи - " +
@@ -58,7 +61,7 @@ public class Manager {
         if (sbShortTasksInfo.isEmpty()) {
             System.out.println("Вы еще ничего не сохраняли");
         } else {
-            System.out.println(sbShortTasksInfo);
+            System.out.println(sbShortTasksInfo);   //выводим список и предлагаем какую задачу вывести
 
             System.out.println("Введите номер задачи для отображения");
             int taskUniqueNumber = scanner.nextInt();
@@ -66,10 +69,18 @@ public class Manager {
             Task currentTask = tasksList.get(taskUniqueNumber);
             System.out.println("Наименование задачи - " + currentTask.getTitle() +
                     "\n \t   Описание: " + currentTask.getDescription());
+
+            if (searchHistory.size() <= 10) { //если список не более 10 элементов
+                searchHistory.add(tasksList.get(taskUniqueNumber));
+            } else {
+                searchHistory.remove(0); //если уже заполнен, то стираем первый элемент и добавляем новый
+                searchHistory.add(tasksList.get(taskUniqueNumber));
+            }
         }
     }
 
-    public void addNewTask() {
+    @Override
+    public void addNewTask() { //добавление новой задачи
         System.out.println("""
                 Введите номер типа задачи:
                 1.Task
@@ -85,20 +96,20 @@ public class Manager {
             String taskDescription = scanner.nextLine();
 
             switch (taskType) {
-                case 1 -> {
+                case 1 -> { //создание обычной задачи
                     Task newTask = new Task(taskTitle, taskDescription);
                     tasksList.put(newTask.getUniqueNumber(), newTask);
                 }
-                case 2 -> {
+                case 2 -> { //создание продвинутой задачи
                     AdvancedTask newAdvTask = new AdvancedTask(taskTitle, taskDescription);
                     tasksList.put(newAdvTask.getUniqueNumber(), newAdvTask);
                 }
-                case 3 -> {
+                case 3 -> { //добавление подзадачи к уже существующей продвинутой
                     StringBuilder sbShortTasksInfo = new StringBuilder();
                     for (Integer key : tasksList.keySet()) {
                         Task value = tasksList.get(key);
 
-                        if (value.getIdentifier() == TaskIdentifier.advanced) { //выводим список только адванс задач
+                        if (value.getIdentifier() == TaskIdentifier.ADVANCED) { //выводим список только адванс задач
                             sbShortTasksInfo.append("Статус задачи - " + value.getStatus() +
                                     " , название задачи - " + value.getTitle() + " , уникальный номер задачи - " +
                                     value.uniqueNumber + "\n");
@@ -128,16 +139,17 @@ public class Manager {
         }
     }
 
-    public void changeTask() {
+    @Override
+    public void changeTask() { //изменение уже существующей задачи
         StringBuilder sbShortTasksInfo = new StringBuilder();
 
         if (tasksList.isEmpty()) {
             System.out.println("Ни одной задачи еще не было добавлено");
 
         } else {
-            for (Integer key : tasksList.keySet()) {
+            for (Integer key : tasksList.keySet()) { //вывод списка доступных задач
                 Task value = tasksList.get(key);
-                if (value.getStatus() != TaskStatus.Done) {
+                if (value.getStatus() != TaskStatus.DONE) { //со статусов *завершены* не выводим
                     sbShortTasksInfo.append("Статус задачи - " + value.getStatus() +
                             " , название задачи - " + value.getTitle() + " , уникальный номер задачи - " +
                             value.uniqueNumber + "\n");
@@ -150,7 +162,7 @@ public class Manager {
                 Task taskForChange = tasksList.get(taskNumberForChange);
                 System.out.println("Вы выбрали задачу - " + taskForChange.getTitle() + " она типа - " + taskForChange.getStatus());
 
-                while (true) {
+                while (true) {  //меню изменения выбранной нами задачи
                     System.out.println("""
                             Введите номер того операции
                             1.Смена названия
@@ -176,10 +188,10 @@ public class Manager {
                                 System.out.println("Введите новый статус InProgress / Done :");
                                 String newStatus = scanner.next();
                                 if (newStatus.equals("InProgress")) {
-                                    taskForChange.setStatus(TaskStatus.InProgress);
+                                    taskForChange.setStatus(TaskStatus.IN_PROGRESS);
 
                                 } else if (newStatus.equals("Done")) {
-                                    taskForChange.setStatus(TaskStatus.Done);
+                                    taskForChange.setStatus(TaskStatus.DONE);
 
                                 } else {
                                     System.out.println("Неверный статус");
@@ -201,7 +213,8 @@ public class Manager {
         }
     }
 
-    public void deleteTask() {
+    @Override
+    public void deleteTask() { //удаление задачи
         StringBuilder sbShortTasksInfo = new StringBuilder();
 
         if (tasksList.isEmpty()) {
@@ -223,7 +236,8 @@ public class Manager {
         }
     }
 
-    public void printContentFromAdvancedTask() {
+    @Override
+    public void printContentFromAdvancedTask() { //вывод списка подзадач из одной продвинутой задачи по нашему выбору
         StringBuilder sbShortTasksInfo = new StringBuilder();
 
         if (tasksList.isEmpty()) {
@@ -233,7 +247,7 @@ public class Manager {
             for (Integer key : tasksList.keySet()) {
                 Task value = tasksList.get(key);
 
-                if (value.getIdentifier() == TaskIdentifier.advanced) {    //выводим список только адванс задач
+                if (value.getIdentifier() == TaskIdentifier.ADVANCED) {    //выводим список только адванс задач
                     sbShortTasksInfo.append("Статус задачи - " + value.getStatus() +
                             " , название задачи - " + value.getTitle() + " , уникальный номер задачи - " +
                             value.uniqueNumber + "\n");
@@ -265,4 +279,19 @@ public class Manager {
             }
         }
     }
+
+    @Override
+    public void history() { //вывод списка истории просмотров
+        StringBuilder sbHistory = new StringBuilder();
+
+        if (searchHistory.isEmpty()) {
+            System.out.println("Еще не было ни одного поиска");
+        } else {
+            for (Task task : searchHistory) {
+                sbHistory.append("Задача - " + task.getTitle() + ", id задачи - " + task.getUniqueNumber() +
+                        ", типа - " + task.getIdentifier() + "\n");
+            }
+        }
+    }
 }
+

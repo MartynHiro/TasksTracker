@@ -1,3 +1,3 @@
 public enum TaskIdentifier {
-    common, advanced, sub;
+    COMMON, ADVANCED, SUB;
 }
