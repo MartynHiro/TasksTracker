@@ -129,7 +129,7 @@ public class InMemoryTaskManager implements TaskManager {
 
         Task currentTask = tasksList.get(SearchingId);
 
-        if (searchHistory.size() <= 10) { //если список не более 10 элементов
+        if (searchHistory.size() < 10) { //если список не более 10 элементов
             searchHistory.add(currentTask);
         } else {
             searchHistory.remove(0); //если уже заполнен, то стираем первый элемент и добавляем новый
@@ -254,6 +254,7 @@ public class InMemoryTaskManager implements TaskManager {
             return "Еще не было ни одного поиска";
         }
 
+        sbHistory.append("История поиска: \n");
         for (Task task : searchHistory) {
             sbHistory.append("Задача - " + task.getTitle() + ", id задачи - " + task.getUniqueNumber() +
                     ", типа - " + task.getType() + "\n");
