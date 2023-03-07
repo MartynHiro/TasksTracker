@@ -5,7 +5,7 @@ public class Task {
     protected static int totalTasksNumber = 0;
     protected TaskStatus status;
 
-    protected TaskIdentifier identifier;
+    protected TaskType type;
 
     public Task(String title, String description) {
         this.title = title;
@@ -42,11 +42,11 @@ public class Task {
         this.status = status;
     }
 
-    public void setIdentifier(TaskIdentifier identifier) {
-        this.identifier = identifier;
+    public void setType(TaskType type) {
+        this.type = type;
     }
 
-    public TaskIdentifier getIdentifier() {
-        return identifier;
+    public TaskType getType() {
+        return type;
     }
 }

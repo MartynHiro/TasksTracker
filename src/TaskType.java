@@ -1,3 +1,3 @@
-public enum TaskIdentifier {
+public enum TaskType {
     COMMON, ADVANCED, SUB;
 }
