@@ -3,6 +3,8 @@ import java.util.ArrayList;
 public class AdvancedTask extends Task {
     protected ArrayList<Integer> subTasksNumbers;
 
+    protected TaskType type = TaskType.ADVANCED;
+
     public AdvancedTask(String title, String description) {
         super(title, description);
         subTasksNumbers = new ArrayList<>();
@@ -18,5 +20,9 @@ public class AdvancedTask extends Task {
 
     public ArrayList<Integer> getSubTasksNumbers() {
         return subTasksNumbers;
+    }
+
+    public TaskType getType() {
+        return type;
     }
 }

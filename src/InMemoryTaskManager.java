@@ -19,23 +19,72 @@ public class InMemoryTaskManager implements TaskManager {
         StringBuilder sbDoneTasks = new StringBuilder();
 
         if (!tasksList.isEmpty()) {
-            for (Integer key : tasksList.keySet()) { //перебираем все дерево задач
-                Task value = tasksList.get(key);
 
-                if (value.getStatus() == TaskStatus.NEW) { //можем через == так как это ENUM
-                    sbNewTasks.append("\tНаименование задачи - " + value.getTitle() +
-                            " ее id - " + value.getUniqueNumber() +
-                            "\n \t   Описание: " + value.getDescription() + "\n");
+            for (Integer taskId : tasksList.keySet()) { //перебираем все дерево задач
+                Task currentTask = tasksList.get(taskId);
 
-                } else if (value.getStatus() == TaskStatus.IN_PROGRESS) {
-                    sbProgressTasks.append("\tНаименование задачи - " + value.getTitle() +
-                            " ее id - " + value.getUniqueNumber() +
-                            "\n \t   Описание: " + value.getDescription() + "\n");
+                if (currentTask.getType() == TaskType.COMMON) { //выделяем обычные задачи
+                    TaskStatus currentTaskStatus = currentTask.getStatus();
 
-                } else {
-                    sbDoneTasks.append("\tНаименование задачи - " + value.getTitle() +
-                            " ее id - " + value.getUniqueNumber() +
-                            "\n \t   Описание: " + value.getDescription() + "\n");
+                    if (currentTaskStatus == TaskStatus.NEW) { //делим на новые/в процессе/завершенные
+                        sbNewTasks.append(addingInSb(currentTask));
+
+                    } else if (currentTaskStatus == TaskStatus.IN_PROGRESS) {
+                        sbProgressTasks.append(addingInSb(currentTask));
+
+                    } else {
+                        sbDoneTasks.append(addingInSb(currentTask));
+                    }
+                }
+
+                if (currentTask.getType() == TaskType.ADVANCED) {
+                    //теперь проходимся по продвинутым задачам отдельно так как их статус зависит от подзадач
+                    AdvancedTask currentAdvTask = (AdvancedTask) currentTask; //уже уверены что она продвинутая
+
+//                    ArrayList<Integer> subTasksIdInCurrentAdvTask = currentAdvTask.getSubTasksNumbers();
+
+                    TaskStatus currentTaskStatus = null; //если останется null значит нет подзадач
+                    //тут будем хранить итоговый статус продвинутой задачи исходя из статусов подзадач
+
+                    StringBuilder sbSubTasksDescriptions = new StringBuilder();
+                    sbSubTasksDescriptions.append("Эта продвинутая задача включает в себя\n");
+                    //компонуем описание всех подзадач нашей продвинутой для вывода
+
+                    for (int numberOfSubTask : currentAdvTask.getSubTasksNumbers()) { //проходимся по нашему списку
+                        SubTask subTask = (SubTask) tasksList.get(numberOfSubTask); //уже уверены что они все подзадачи
+
+                        if (currentTaskStatus == null) { //если это первая подзадача, то записываем ее статус
+                            currentTaskStatus = subTask.getStatus();
+                            //статус новой задачи будет присваиваться только здесь
+                            sbSubTasksDescriptions.append(addingSubDescriptionForAdvTask(subTask));
+
+                        } else if (subTask.getStatus() == TaskStatus.IN_PROGRESS) { //если в подзадаче статус в процессе
+                            currentTaskStatus = TaskStatus.IN_PROGRESS;
+                            //записываем всегда в приоритете такой статус так как если хоть одна подзадача *в процессе*
+                            //то и вся продвинутая задача будет иметь такой статус
+                            sbSubTasksDescriptions.append(addingSubDescriptionForAdvTask(subTask));
+
+                        } else if (subTask.getStatus() == TaskStatus.DONE && currentTaskStatus != TaskStatus.IN_PROGRESS) {
+                            currentTaskStatus = TaskStatus.DONE;
+                            //статус завершена присваивается только если нет подзадач в процессе
+                            sbSubTasksDescriptions.append(addingSubDescriptionForAdvTask(subTask));
+
+                        } else {
+                            //если статус менять не надо просто запоминаем описание нашей подзадачи
+                            sbSubTasksDescriptions.append(addingSubDescriptionForAdvTask(subTask));
+                        }
+                    }
+
+                    //теперь выяснив какой статус у продвинутой задачи, можем ее добавить в sb
+                    if (currentTaskStatus == TaskStatus.NEW) { //делим на новые/в процессе/завершенные
+                        sbNewTasks.append(addingInSb(currentTask) + sbSubTasksDescriptions);
+
+                    } else if (currentTaskStatus == TaskStatus.IN_PROGRESS) {
+                        sbProgressTasks.append(addingInSb(currentTask) + sbSubTasksDescriptions);
+
+                    } else {
+                        sbDoneTasks.append(addingInSb(currentTask) + sbSubTasksDescriptions);
+                    }
                 }
             }
 
@@ -55,6 +104,18 @@ public class InMemoryTaskManager implements TaskManager {
         } else {
             return "Вы не сохраняли ни одной задачи";
         }
+    }
+
+    private String addingSubDescriptionForAdvTask(SubTask subTask) {
+        return "Подпункт - " + subTask.getTitle()
+                + "\n \t с описанием - " + subTask.getDescription() + "\n";
+
+    }
+
+    private String addingInSb(Task currentTask) {
+        return "\tНаименование задачи - *" + currentTask.getTitle() +
+                "* ,ее id - " + currentTask.getUniqueNumber() +
+                "\n \t   Описание: " + currentTask.getDescription() + "\n";
     }
 
     @Override
@@ -104,7 +165,7 @@ public class InMemoryTaskManager implements TaskManager {
                 tasksList.put(newSubTask.getUniqueNumber(), newSubTask);
 
                 AdvancedTask advTask = (AdvancedTask) tasksList.get(advancedTaskId); //Добавляем в адванс нашу саб задачу
-                advTask.setSubTasksNumbers(advancedTaskId);
+                advTask.setSubTasksNumbers(newSubTask.getUniqueNumber());
                 return true;
             }
         }

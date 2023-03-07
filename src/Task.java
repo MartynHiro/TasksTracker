@@ -5,7 +5,7 @@ public class Task {
     protected static int totalTasksNumber = 0;
     protected TaskStatus status;
 
-    protected TaskType type;
+    protected TaskType type = TaskType.COMMON;
 
     public Task(String title, String description) {
         this.title = title;
